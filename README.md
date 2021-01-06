@@ -1,6 +1,9 @@
 # Motivation_in_WM_Analysis
 
-This matlab code will run the analyses and make the figures from the Motivation in Working Memory paper (Grogan et al.).
+This matlab code will run the analyses and make the figures from the Motivation in Working Memory paper:
+Grogan, J.P., Randhawa, G., Kim, M., & Manohar, S.G. (2021). Motivation Improves Working Memory by Two Processes: Prioritisation and Retrieval Thresholds
+
+
 
 It requires:
 Matlab (preferably R2018b although other versions should work)
