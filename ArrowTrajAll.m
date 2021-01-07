@@ -60,8 +60,13 @@ for i = 1:n
 
     o{i}.condLabels = condLabels{i,:}(1,:);
     o{i}.legends = legends{i,:};
-      
+    
+    
 end
+
+% remove initial two trials for expt 5a
+o{5}.interpTargDists(:,1:2,:) = NaN;
+
 
 %%
 sepConds=0;
