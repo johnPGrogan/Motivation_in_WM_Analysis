@@ -355,7 +355,7 @@ if doPerm
             Y = [timeResidsData(:,:,1,iP,j);timeResidsData(:,:,2,iP,j)]; % data
             X = [zeros(size(timeResidsData,1),1);ones(size(timeResidsData,1),1)]; % design [low; high]
             G = [timeResidsGroup(:,1,1,iP,j);timeResidsGroup(:,1,1,iP,j) ]; % group = pp
-            [~,permP(iP,:,j)] = permutationOLS( Y , X , [] , G, permargs{:});
+            [~,permP(iP,:,j)] = permutationOLS( Y , X , [] , G, permArgs{:});
         end
     end
 end
@@ -364,7 +364,7 @@ end
 exptLabels = {'equal','unequal'};
 
 stars = p2stars(timeRewIntP);
-for j = 1:2
+for j = 1
     figure();
     cols = get(gca,'ColorOrder');
     cols = cols(4:5,:);
@@ -419,4 +419,4 @@ legend([h{:,1}], {'equal','unequal'},'Location','Best');
 %% save
 
 save('./Data/ArrowFitTrajInterp.mat','allParsConds','o','o2','condLabels',...
-    'nInterps','nExpts','parNames','sepConds','timeResidsData');
+    'nInterps','nExpts','parNames','sepConds','timeResidsData','timeResidsP','doPerm','timeRewIntP');

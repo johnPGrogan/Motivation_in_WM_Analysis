@@ -29,9 +29,10 @@ subInds = {[2 3 1; 2 3 2; 2 3 4; 2 3 5; 2 3 6]; [2 3 3]; []; []}; % shape, inds 
 
 makeSame = {[5 6]}; % make these subplot inds the same scales
 
-saveNames = cellfun(@(x) sprintf('./Figs/WmMotivExpt%s.png',x), {'1','2','3','4','5a','5b'},'UniformOutput',0)';
-saveNames{7} = 'WmMotivCorrels.png';
-saveNames = cell(7,1); % uncomment to prevent saving
+saveNames = cellfun(@(x) sprintf('./Figs/WmMotivExpt%s.svg',x), {'1','2','3','4','5a','5b'},'UniformOutput',0)';
+saveNames{7} = 'WmMotivCorrels.svg';
+saveNames{8} = 'WmMotivModelTraj.svg';
+saveNames = cell(8,1); % uncomment to prevent saving
 
 
 %% expt 1
@@ -197,7 +198,7 @@ mySubPlots(allMeasures, subInds2, markers, lineColours, measureNames([1, 4]),...
 %% correls
 
 load('./Data/ArrowMotivMotorCorrels.mat','motorRew','wmRew','fields');
-plotargs = {'pearson',0,'plot_ci',1,'text',0, 'plotline', 1, 'showzero',1}; % use spearman correlation?
+plotargs = {'pearson',0,'plot_ci',1,'text',0, 'plotline', 2, 'showzero',1}; % use spearman correlation?
 
 varNames = {'Error (deg)', 'initRT', 'complRT', 'RT (ms)'};
 corInds = [1 4]; % only plot error + RT
@@ -230,6 +231,48 @@ h = findobj(gca,'Type','Patch');
 h.FaceColor = [ .2 .2 .2];
 if ~isempty(saveNames{7})
     saveas(f, saveNames{7});
+end
+
+%% trajectory modelling
+
+load('./Data/ArrowFitTrajInterp.mat','timeRewIntP','timeResidsData','parNames','timeResidsP')
+
+exptLabels = {'equal','unequal'};
+f = figure();
+clear h;
+stars = p2stars(timeRewIntP);
+
+cols = get(gca,'ColorOrder');
+cols = cols(4:5,:);
+
+for iP = 1:4
+    subplot(2,2,iP)
+    set(gca,'ColorOrder',cols);
+    h(:,:,iP) = errorBarPlot(timeResidsData(:,:,:,iP,1),'area',1);
+    ylabel([parNames(iP)]);
+    xlabel('% of movement time');
+    hold on;
+    yline(0,':k');
+    yl = [-1.2 1.2];
+    ylim(yl);
+    box off;
+    h1 = pbar(sq(timeResidsP(iP,:,1)),'yVal',min(yl),'alpha',.05); % p values per time
+
+    % rew*time int
+    text(50 - length(stars{3,iP,1})*3., max(yl)*.8, stars(3,iP,1),  'fontsize', 20);
+
+    xlim([1 100]);
+    xticks([1 50 100]);
+    xticklabels([0 50 100]);
+end
+
+subplot(2,2,1)
+legend([h{:,1},h1],{'1p','50p','p<.05'},'Location',[0.3172 0.7731 0.1411 0.1119]);
+makeSubplotScalesEqual(2,2);
+
+
+if ~isempty(saveNames{8})
+    saveas(f, saveNames{8});
 end
 end
 
