@@ -25,15 +25,14 @@ lineColours = [0 .447 .741; .85 .325 .098; .7 0 .7; 0 .7 .2; .929 .694 .125; .63
 % % % then trajectory plot, then param scatter plot, then histograms. empty = ignore
 % subInds = {[2 3 1; 2 3 2; 2 3 4]; [2 3 3]; [2 3 5]; [4 3 9; 4 3 12]}; % shape, inds for: myFig, traj, cross, rew eff
 % subInds = {[2 3 1; 2 3 2; 2 3 4]; [2 3 3]; [2 3 5]; [2 3 6]}; % shape, inds for: myFig, traj, cross, rew eff
-subInds = {[2 3 1; 2 3 2; 2 3 4; 2 3 5; 2 3 6]; [2 3 3]; []; []}; % shape, inds for: myFig, traj, cross, rew eff
+subInds = {[2 3 1; 2 3 2; 2 3 4; 2 3 5; 2 3 6]; [4 3 6]; []; []; [4 3 3]}; % shape, inds for: myFig, traj, cross, rew eff
 
 makeSame = {[5 6]}; % make these subplot inds the same scales
 
-saveNames = cellfun(@(x) sprintf('./Figs/WmMotivExpt%s.svg',x), {'1','2','3','4','5a','5b'},'UniformOutput',0)';
+saveNames = cellfun(@(x) sprintf('./Figs/WmMotivExpts%s.svg',x), {'1','2','3','4','5a','5b'},'UniformOutput',0)';
 saveNames{7} = 'WmMotivCorrels.svg';
 saveNames{8} = 'WmMotivModelTraj.svg';
 saveNames = cell(8,1); % uncomment to prevent saving
-
 
 %% expt 1
 
@@ -159,7 +158,7 @@ allMeasures = nancat(4, allMeasures, allPars); % combine beh + pars
 % trim
 allMeasures = allMeasures(:,:,:,[1,4]);
 
-subInds2 = {[2 3 1; 2 3 2]; [2 3 3]; []; []}; % shape, inds for: myFig, traj, cross, rew eff
+subInds2 = {[2 3 1; 2 3 2]; [4 3 6]; []; []; [4 3 3]}; % shape, inds for: myFig, traj, cross, rew eff
 
 % factor names
 xTickNames = {'1p', '50p'};
@@ -183,7 +182,7 @@ allMeasures = nancat(4, allMeasures, allPars); % combine beh + pars
 % trim
 allMeasures = allMeasures(:,:,:,1:4);
 
-subInds2 = {[2 3 4; 2 3 5]; [2 3 6]; []; []}; % shape, inds for: myFig, traj, cross, rew eff
+subInds2 = {[2 3 4; 2 3 5]; [4 3 12]; []; []; [4 3 9]}; % shape, inds for: myFig, traj, cross, rew eff
 
 makeSame2 = {[1 4]; [2 5]};
 
@@ -301,11 +300,20 @@ if ~isempty(subInds{1})
     end
     
 end
+
+
 %% traj plot - averages for each reward level
 if ~isempty(subInds{2})
     subplot(subInds{2}(1,1), subInds{2}(1,2), subInds{2}(1,3));
     myTrajPlot(traj, iTraj, 1, lineColours, lineStyles);
 end
+
+%% indiv scatter
+if ~isempty(subInds{5})
+    subplot(subInds{5}(1,1), subInds{5}(1,2), subInds{5}(1,3));
+    myIndivPlot(allMeasures(:,:,:,[1 2]), iTraj)
+end
+
 
 %% cross plot - params: guess vs misbinding
 if ~isempty(subInds{3})
@@ -623,5 +631,74 @@ box off
 ylabel(['reward effect: ' traj.parNames{iPar}]);
 % if iPar==2; xlabel('timepoint in movement'); end
 if iPar==1 && size(h,1)>1; legend([h{:,1}], leg, 'Location','Best');end
+
+end
+
+function myIndivPlot(measure, exptNum)
+% get reward effect as cols 2:2:end - cols 1:2:end
+% scatterregress them
+
+    scatterArgs = {'pearson',0,'text',0,'plotline',1,'plot_ci',1,'showzero',1};
+%     cols = [0    0.4470    0.7410; 0.8500    0.3250    0.0980];
+    cols = [0 .6 0; 0 0 .6];
+    marker = 'x';
+    sizeData = 100;
+    markerWidth = 1;
+    sigs = {1, 0, 1, [1 0], 0 0};
+    bl = [0 0 0];
+    nPP = size(measure,1);
+
+    if exptNum==4
+        rewMeasures = reshape(cat(5, measure(:,1,:,:), measure(:,2,:,:), measure(:,3,:,:), measure(:,4,:,:)),nPP, 2,2,2,2);
+        %[pp cue meas rew eq]
+
+        rewEffects = sq(nanmean(diff(rewMeasures,[],4), 2)); % [pp meas eq]
+    else
+
+        rewMeasures = reshape(cat(5, measure(:,1:2:end,:,:), measure(:,2:2:end,:,:)),nPP, [],2,2); % [pp conds meas rew]
+        rewEffects = sq(nanmean(diff(rewMeasures,[],4), 2)); % [pp meas]
+
+    end
+    if exptNum==4
+        clear h;
+        for k = 1:2
+            axis([-0.0501    0.0050   -0.2688    1.0000]*1e+3);
+            hold on; 
+            [~,~,~,~,~,h(k,:)] = scatterRegress(sq(rewEffects(:,1,k)), sq(rewEffects(:,2,k)),scatterArgs{:});
+            h(k,1).CData = cols(k,:);
+            h(k,2).Color = cols(k,:);
+            h(k,1).Marker = marker;
+            h(k,1).SizeData = sizeData;
+            h(k,1).LineWidth = markerWidth;
+            f = flip(findobj(gca,'Type','Patch'));
+            f(k).FaceColor = cols(k,:);
+            if ~sigs{exptNum}(k)
+                f(2).FaceColor = bl;
+                h(2,2).Color = bl;
+            end
+        end
+        h(2,2).LineStyle = '--';
+        xlim([-30 5]);
+    else
+        [~,~,~,~,~,h] = scatterRegress(sq(rewEffects(:,1,:)), sq(rewEffects(:,2,:)),scatterArgs{:});
+        f = findobj(gca,'Type','Patch');
+        h(1,1).CData = cols(1,:);
+        h(1).Marker = marker;
+        h(1).SizeData = sizeData;
+        h(1).LineWidth = markerWidth;
+        if ~sigs{exptNum}
+            h(1,2).Color = bl;
+            f.FaceColor = bl;
+        else
+            h(1,2).Color = h(1).CData;
+            f.FaceColor = h(1).CData;
+        end
+    end
+    
+    xlabel('Reward effect on error (deg)');
+    ylabel('Reward effect on RT (ms)');
+    xline(0,':k'); yline(0,':k');
+    if exptNum==4; legend(h(:,1), {'equal','unequal'},'Location','Best'); end
+
 
 end

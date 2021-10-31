@@ -32,6 +32,31 @@ useMemFit = 0; % use MLE non MemFit
 allSwap = ArrowModelCall(modelStruct, SwapModel(), splitBy,useMemFit); % fit the misbinding model
 allMix = ArrowModelCall(modelStruct, StandardMixtureModel(), splitBy,useMemFit); % fit the model without misbinding
 
+%%
+do180 = 0; % fit model with sep misbinding to 180degrees from target?
+
+if do180
+    % set prevResp to 180 (i.e. 180 from target)
+    for i = 1:n
+        modelStruct(i).data.prevResp = ones(size(modelStruct(i).data.errors))*180;%mod(modelStruct(i).data.targets + 360,360)-180;    
+    end
+    % fit with extra misbinding
+    all180 = ArrowModelCall(modelStruct, SwapModelPrev, splitBy,useMemFit);
+
+end
+
+%% compare overall fits (across all conditions)
+models = {SwapModel(), StandardMixtureModel()};
+if do180
+    models{end+1} = SwapModelPrev();
+end
+
+for i=1:length(models)
+    allTrialsFit(i) = ArrowModelCall(modelStruct, models{i}, 'allTrials',0); % fit the misbinding model
+end
+meanBIC = nanmean([allTrialsFit.bic])
+[m,i] = min(meanBIC)
+
 %% model comparison
 
 mean(sq([allSwap.bic] < [allMix.bic]))
@@ -44,7 +69,7 @@ bestModel.model = SwapModel();
 
 bestPars = [bestModel.pars];%8 x nPars x n
 g = sq(bestPars(:,1,:));
-sd = sq(bestPars(:,end,:));
+sd = sq(bestPars(:,3,:));
 
 nPars = bestModel.nPars + 1;
 if nPars == 4
@@ -108,7 +133,7 @@ for i = 1:size(pVals,2)
 end
 
 %%
-parNames = {'imprecision','target','guess','misbind','pr'};
+parNames = {'imprecision','target','guess','misbind','m180'};
 
 allStats = table();
 allStats1 = table();

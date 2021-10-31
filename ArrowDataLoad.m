@@ -5,7 +5,11 @@ n = length(dataFiles);
 warning('off','MATLAB:dispatcher:UnresolvedFunctionHandle');
 for i = 1:n
     d = load(dataFiles{i});
-    output(i) = ExtractSummary(d.result);
+    output1 = ExtractSummary(d.result);
+    if i>1
+        [output, output1] = ensureStructsAssignable(output, output1,false);
+    end
+    output(i) = output1;
 end
 warning('on','MATLAB:dispatcher:UnresolvedFunctionHandle')
 
@@ -95,7 +99,7 @@ function output = ExtractSummary(result)
     if isfield(result.data(1), 'ResponseRetrocue')
         cueResp = 'ResponseRetrocue';
     else
-        respEnd = '';
+        cueResp = '';
     end
     if isfield(result.data(1), 'ShowRetrocue')
         cueStart = 'ShowRetrocue';

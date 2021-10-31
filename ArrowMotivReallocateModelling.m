@@ -19,6 +19,31 @@ allMix = ArrowModelCall(modelStruct, StandardMixtureModel(), splitBy,useMemFit);
 
 allVarPrec = ArrowModelCall(modelStruct, VariablePrecisionModel(), splitBy,useMemFit);
 
+%%
+do180 = 0; % fit model with sep misbinding to 180degrees from target?
+
+if do180
+    % set prevResp to 180 (i.e. 180 from target)
+    for i = 1:n
+        modelStruct(i).data.prevResp = ones(size(modelStruct(i).data.errors))*180;%mod(modelStruct(i).data.targets + 360,360)-180;    
+    end
+    % fit with extra misbinding
+    all180 = ArrowModelCall(modelStruct, SwapModelPrev, splitBy,useMemFit);
+
+end
+
+%% compare overall fits (across all conditions)
+models = {SwapModel(), StandardMixtureModel()};
+if do180
+    models{end+1} = SwapModelPrev();
+end
+
+for i=1:length(models)
+    allTrialsFit(i) = ArrowModelCall(modelStruct, models{i}, 'allTrials',0); % fit the misbinding model
+end
+meanBIC = nanmean([allTrialsFit.bic])
+[m,i] = min(meanBIC)
+
 %% model comparison
 
 mean(sq([allSwap.bic] < [allMix.bic]))
@@ -92,7 +117,7 @@ for i = 1:size(pVals,2)
 end
 
 %%
-parNames = {'imprecision','target','guess','misbind','pr'};
+parNames = {'imprecision','target','guess','misbind','m180'};
 
 allStats = table();
 allStats1 = table();
@@ -219,11 +244,11 @@ end
 
 
 %%
-allMeanConds = NaN(n,2,3,4);
+allMeanConds = NaN(n,2,3,nPars);
 cols = {[1 2 5 6]; [3 4 7 8];... % low vs high
     [1 2 3 4]; [5 6 7 8];... % pre vs post
     [1 4 5 8];[2 3 6 7];}; % motiv vs reallocate
-for i = 1:4%for each DV
+for i = 1:nPars%for each DV
     for j = 1:3%for each factor
         %get means
         allMeanConds(:,:,j,i) = [nanmean(allPars(:,cols{j*2-1},i),2), nanmean(allPars(:,cols{j*2},i),2)];
@@ -266,7 +291,7 @@ intCols =  {   [1 2],[5 6],[3 4],[7 8];...%rew*cue
         [1 4], [2 3], [5 8], [6 7];};%cue*motiv
 
 allInts = [];
-for i = 1:4
+for i = 1:nPars
     for j = 1:3
         allInts(:,:,:,j,i) = nancat(3, [nanmean(allPars(:,intCols{j,1},i),2),nanmean(allPars(:,intCols{j,2},i),2)],...
             [nanmean(allPars(:,intCols{j,3},i),2),nanmean(allPars(:,intCols{j,4},i),2)]);
